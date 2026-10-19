@@ -113,3 +113,25 @@ MAILERS = {
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# -25- Стандартные настройки почты Django для задания со звездочкой
+DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL')  # Безопасный импорт из .env email для отправки поздравления
+
+
+
+# # Настройка реальной отправки писем через SMTP Яндекс (блок MAILERS)
+# MAILERS = {
+#     'default': {
+#         'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+#         'HOST': 'smtp.yandex.ru',
+#         'PORT': 465,
+#         'USE_SSL': True,
+#         'USER': os.getenv('EMAIL_HOST_USER'),
+#         'PASSWORD': os.getenv('EMAIL_HOST_PASSWORD'),
+#     },
+# }
+#
+# DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
+# ADMIN_EMAIL = os.getenv('ADMIN_EMAIL')
