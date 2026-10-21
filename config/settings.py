@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'catalog',  # добавляем приложение
+    'blog',
 ]
 
 
@@ -112,3 +113,8 @@ MAILERS = {
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# -25- Стандартные настройки почты Django для задания со звездочкой
+DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL')  # Безопасный импорт из .env email для отправки поздравления

@@ -1,41 +1,55 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.views.generic import ListView, TemplateView, DetailView, CreateView
 from catalog.models import Product, ContactInfo
 from catalog.forms import ProductForm
 
 
-def home_view(request):
+class ProductListView(ListView):
     """Контроллер главной страницы"""
-    # -24- используем лаконичный запрос для всех товаров
-    products_all = Product.objects.all()
+    model = Product
+    template_name = 'catalog/home.html'
+    context_object_name = 'products'
 
-    # Вывод в консоль для проверки (выведет первые 5 из всех)
-    print("\n--- ПОСЛЕДНИЕ ПРОДУКТЫ В КОНСОЛИ ---")
-    for product in products_all[:5]:
-      print(f"ID: {product.id} | {product.name} | Цена: {product.price} руб.")
-    print("---------------------------------------\n")
+    def get_queryset(self):
+        # Получаем все товары
+        queryset = super().get_queryset()
 
-    # Передаем все товары в шаблон
-    return render(request, 'catalog/home.html', {'products': products_all})
+        # Сохраняем твой вывод в консоль для проверки первых 5 товаров
+        print("\n--- ПОСЛЕДНИЕ ПРОДУКТЫ В КОНСОЛИ ---")
+        for product in queryset[:5]:
+            print(f"ID: {product.id} | {product.name} | Цена: {product.price} руб.")
+        print("---------------------------------------\n")
+
+        return queryset
 
 
-def categories_view(request):
+class CategoriesListView(ListView):
     """Контроллер для страницы категорий"""
-    # Забираем все продукты, чтобы вывести их на странице категорий
-    products_all = Product.objects.all()
-    # Передаем их в шаблон под ключом 'products'
-    return render(request, 'catalog/21-2_home2.html', {'products': products_all})
+    model = Product
+    template_name = 'catalog/21-2_home2.html'
+    context_object_name = 'products'
 
 
-def orders_view(request):
+class OrdersTemplateView(TemplateView):
     """Контроллер для страницы заказов"""
-    return render(request, 'catalog/21-2_home3.html')
+    template_name = 'catalog/21-2_home3.html'
 
 
-def contacts_view(request):
+class ContactsTemplateView(TemplateView):
     """Контроллер страницы контактов"""
-    context = {}
+    template_name = 'catalog/contacts.html'
 
-    if request.method == 'POST':
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Получаем данные контактов
+        try:
+            context['contact_data'] = ContactInfo.objects.first()
+        except Exception:
+            context['contact_data'] = None
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # Обработка отправки формы обратной связи
         name = request.POST.get('name')
         email = request.POST.get('email')
         message = request.POST.get('message')
@@ -45,36 +59,22 @@ def contacts_view(request):
         print(f"Текст: {message}")
         print("-" * 20)
 
+        # Рендерим страницу обратно с сообщением об успехе
+        context = self.get_context_data()
         context['success_message'] = 'Спасибо! Ваше сообщение успешно отправлено.'
-
-    try:
-      context['contact_data'] = ContactInfo.objects.first()
-    except Exception:
-      context['contact_data'] = None
-
-    return render(request, 'catalog/contacts.html', context)
+        return self.render_to_response(context)
 
 
-# -24-(Задание 1)
-def product_detail_view(request, pk):
+class ProductDetailView(DetailView):
     """Контроллер страницы с подробной информацией о товаре"""
-    # Получаем pk из URL, извлекаем объект через ORM или отдаем 404
-    product = get_object_or_404(Product, pk=pk)
-    # Передаем объект в шаблон детальной страницы
-    return render(request, 'catalog/product_detail.html', {'product': product})
+    model = Product
+    template_name = 'catalog/product_detail.html'
+    context_object_name = 'product'
 
 
-# -24-(Дополнительное задание 1)
-def create_product_view(request):
+class ProductCreateView(CreateView):
     """Контроллер формы для создания нового товара с защитой и валидацией"""
-    if request.method == 'POST':
-        # Если пользователь нажал кнопку "Сохранить", передаем данные в форму
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()  # Форма валидна — сохраняем новый товар в БД
-            return redirect('catalog:21-2_home1')  # Перенаправляем на главную
-    else:
-        # Если пользователь просто открыл страницу — отдаем пустую форму
-        form = ProductForm()
-
-    return render(request, 'catalog/product_form.html', {'form': form})
+    model = Product
+    form_class = ProductForm
+    template_name = 'catalog/product_form.html'
+    success_url = reverse_lazy('catalog:21-2_home1')  # Перенаправление на главную после создания
